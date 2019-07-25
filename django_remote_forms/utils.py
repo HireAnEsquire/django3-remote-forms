@@ -16,7 +16,7 @@ def resolve_promise(o):
             try:
                 o = [resolve_promise(x) for x in o]
             except:
-                raise Exception('Unable to resolve lazy object %s' % o)
+                raise Exception("Unable to resolve lazy object %s" % o)
     elif callable(o):
         o = o()
 

@@ -13,40 +13,51 @@ class RemoteForm(object):
 
         self.all_fields = set(self.form.fields.keys())
 
-        self.excluded_fields = set(kwargs.pop('exclude', []))
-        self.included_fields = set(kwargs.pop('include', []))
-        self.readonly_fields = set(kwargs.pop('readonly', []))
-        self.ordered_fields = kwargs.pop('ordering', [])
+        self.excluded_fields = set(kwargs.pop("exclude", []))
+        self.included_fields = set(kwargs.pop("include", []))
+        self.readonly_fields = set(kwargs.pop("readonly", []))
+        self.ordered_fields = kwargs.pop("ordering", [])
 
-        self.fieldsets = kwargs.pop('fieldsets', {})
+        self.fieldsets = kwargs.pop("fieldsets", {})
 
         # Make sure all passed field lists are valid
         if self.excluded_fields and not (self.all_fields >= self.excluded_fields):
-            logger.warning('Excluded fields %s are not present in form fields' % (self.excluded_fields - self.all_fields))
+            logger.warning(
+                "Excluded fields %s are not present in form fields" % (self.excluded_fields - self.all_fields)
+            )
             self.excluded_fields = set()
 
         if self.included_fields and not (self.all_fields >= self.included_fields):
-            logger.warning('Included fields %s are not present in form fields' % (self.included_fields - self.all_fields))
+            logger.warning(
+                "Included fields %s are not present in form fields" % (self.included_fields - self.all_fields)
+            )
             self.included_fields = set()
 
         if self.readonly_fields and not (self.all_fields >= self.readonly_fields):
-            logger.warning('Readonly fields %s are not present in form fields' % (self.readonly_fields - self.all_fields))
+            logger.warning(
+                "Readonly fields %s are not present in form fields" % (self.readonly_fields - self.all_fields)
+            )
             self.readonly_fields = set()
 
         if self.ordered_fields and not (self.all_fields >= set(self.ordered_fields)):
-            logger.warning('Readonly fields %s are not present in form fields' % (set(self.ordered_fields) - self.all_fields))
+            logger.warning(
+                "Readonly fields %s are not present in form fields" % (set(self.ordered_fields) - self.all_fields)
+            )
             self.ordered_fields = []
 
         if self.included_fields | self.excluded_fields:
-            logger.warning('Included and excluded fields have following fields %s in common' % (set(self.ordered_fields) - self.all_fields))
+            logger.warning(
+                "Included and excluded fields have following fields %s in common"
+                % (set(self.ordered_fields) - self.all_fields)
+            )
             self.excluded_fields = set()
             self.included_fields = set()
 
         # Extend exclude list from include list
-        self.excluded_fields |= (self.included_fields - self.all_fields)
+        self.excluded_fields |= self.included_fields - self.all_fields
 
         if not self.ordered_fields:
-            if hasattr(self.form.fields, 'keyOrder'):
+            if hasattr(self.form.fields, "keyOrder"):
                 self.ordered_fields = self.form.fields.keyOrder
             else:
                 self.ordered_fields = list(self.form.fields.keys())
@@ -64,15 +75,15 @@ class RemoteForm(object):
         fieldset_fields = set()
         if self.fieldsets:
             for fieldset_name, fieldsets_data in self.fieldsets:
-                if 'fields' in fieldsets_data:
-                    fieldset_fields |= set(fieldsets_data['fields'])
+                if "fields" in fieldsets_data:
+                    fieldset_fields |= set(fieldsets_data["fields"])
 
         if not (self.all_fields >= fieldset_fields):
-            logger.warning('Following fieldset fields are invalid %s' % (fieldset_fields - self.all_fields))
+            logger.warning("Following fieldset fields are invalid %s" % (fieldset_fields - self.all_fields))
             self.fieldsets = {}
 
         if not (set(self.fields) >= fieldset_fields):
-            logger.warning('Following fieldset fields are excluded %s' % (fieldset_fields - set(self.fields)))
+            logger.warning("Following fieldset fields are excluded %s" % (fieldset_fields - set(self.fields)))
             self.fieldsets = {}
 
     def as_dict(self):
@@ -106,17 +117,17 @@ class RemoteForm(object):
         if isinstance(self.form, forms.formsets.BaseFormSet):
             form_dict = self.get_formset_dict(self.form)
             return form_dict
-        form_dict['type'] = self.form.__class__.__name__
-        form_dict['non_field_errors'] = self.form.non_field_errors()
-        form_dict['label_suffix'] = self.form.label_suffix
-        form_dict['is_bound'] = self.form.is_bound
-        form_dict['prefix'] = self.form.prefix
-        form_dict['fields'] = OrderedDict()
-        form_dict['errors'] = self.form.errors
-        form_dict['fieldsets'] = getattr(self.form, 'fieldsets', [])
+        form_dict["type"] = self.form.__class__.__name__
+        form_dict["non_field_errors"] = self.form.non_field_errors()
+        form_dict["label_suffix"] = self.form.label_suffix
+        form_dict["is_bound"] = self.form.is_bound
+        form_dict["prefix"] = self.form.prefix
+        form_dict["fields"] = OrderedDict()
+        form_dict["errors"] = self.form.errors
+        form_dict["fieldsets"] = getattr(self.form, "fieldsets", [])
 
         # If there are no fieldsets, specify order
-        form_dict['ordered_fields'] = self.fields
+        form_dict["ordered_fields"] = self.fields
 
         initial_data = {}
 
@@ -132,38 +143,38 @@ class RemoteForm(object):
 
             # Instantiate the Remote Forms equivalent of the field if possible
             # in order to retrieve the field contents as a dictionary.
-            remote_field_class_name = 'Remote%s' % field.__class__.__name__
+            remote_field_class_name = "Remote%s" % field.__class__.__name__
             try:
                 remote_field_class = getattr(fields, remote_field_class_name, fields.RemoteField)
                 remote_field = remote_field_class(field, form_initial_field_data, field_name=name)
             except Exception as e:
-                logger.warning('Error serializing field %s: %s', remote_field_class_name, str(e))
+                logger.warning("Error serializing field %s: %s", remote_field_class_name, str(e))
                 field_dict = {}
             else:
                 field_dict = remote_field.as_dict()
 
             if name in self.readonly_fields:
-                field_dict['readonly'] = True
+                field_dict["readonly"] = True
 
-            form_dict['fields'][name] = field_dict
+            form_dict["fields"][name] = field_dict
 
             # Load the initial data, which is a conglomerate of form initial and field initial
-            if 'initial' not in form_dict['fields'][name]:
-                form_dict['fields'][name]['initial'] = None
+            if "initial" not in form_dict["fields"][name]:
+                form_dict["fields"][name]["initial"] = None
 
-            initial_data[name] = form_dict['fields'][name]['initial']
+            initial_data[name] = form_dict["fields"][name]["initial"]
 
-        form_dict['data'] = self.get_form_data_without_prefix(self.form, initial_data)
+        form_dict["data"] = self.get_form_data_without_prefix(self.form, initial_data)
 
-        form_dict['nested'] = {}
+        form_dict["nested"] = {}
 
-        if hasattr(self.form, 'nested'):
+        if hasattr(self.form, "nested"):
             if isinstance(self.form.nested, dict):
                 for form in list(self.form.nested.values()):
-                    form_dict['nested'] = form_dict.setdefault('nested', {})
+                    form_dict["nested"] = form_dict.setdefault("nested", {})
                     form_dict.update(self.get_nested_formset_dict(form, form_dict))
             else:
-                form_dict['nested'] = self.get_nested_formset_dict(self.form.nested, form_dict)
+                form_dict["nested"] = self.get_nested_formset_dict(self.form.nested, form_dict)
 
         return resolve_promise(form_dict)
 
@@ -186,7 +197,6 @@ class RemoteForm(object):
             ret_dict = initial_data
         return ret_dict
 
-
     def get_nested_formset_dict(self, form, form_dict):
         nested_dict = {}
         if isinstance(form, forms.formsets.BaseFormSet):
@@ -199,17 +209,19 @@ class RemoteForm(object):
         nested_dict = {}
         # handle the empty form
         empty_form = form.empty_form
-        empty_form.fields['id'].choices = []
+        empty_form.fields["id"].choices = []
         empty_form = RemoteForm(empty_form).as_dict()
 
         # create a dict to hold our forms
         nested_dict[form.prefix] = {
-            'empty_form': empty_form,
-            'management_form': self.process_nested_form(form.management_form)
+            "empty_form": empty_form,
+            "management_form": self.process_nested_form(form.management_form),
         }
         for formset_form in form.forms:
-            formset_form.fields['id'].choices = []  # formset adds choices to the id, which can make for some ugly long queries
-            forms = nested_dict[form.prefix].setdefault('forms', [])
+            formset_form.fields[
+                "id"
+            ].choices = []  # formset adds choices to the id, which can make for some ugly long queries
+            forms = nested_dict[form.prefix].setdefault("forms", [])
             forms.append(self.process_nested_form(formset_form))
         return nested_dict
 
