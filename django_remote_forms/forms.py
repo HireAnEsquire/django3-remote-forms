@@ -49,7 +49,7 @@ class RemoteForm(object):
             if hasattr(self.form.fields, 'keyOrder'):
                 self.ordered_fields = self.form.fields.keyOrder
             else:
-                self.ordered_fields = self.form.fields.keys()
+                self.ordered_fields = list(self.form.fields.keys())
 
         self.fields = []
 
@@ -136,7 +136,7 @@ class RemoteForm(object):
             try:
                 remote_field_class = getattr(fields, remote_field_class_name, fields.RemoteField)
                 remote_field = remote_field_class(field, form_initial_field_data, field_name=name)
-            except Exception, e:
+            except Exception as e:
                 logger.warning('Error serializing field %s: %s', remote_field_class_name, str(e))
                 field_dict = {}
             else:
@@ -159,7 +159,7 @@ class RemoteForm(object):
 
         if hasattr(self.form, 'nested'):
             if isinstance(self.form.nested, dict):
-                for form in self.form.nested.itervalues():
+                for form in list(self.form.nested.values()):
                     form_dict['nested'] = form_dict.setdefault('nested', {})
                     form_dict.update(self.get_nested_formset_dict(form, form_dict))
             else:
@@ -175,7 +175,7 @@ class RemoteForm(object):
         """
         ret_dict = {}
         if form.data is not None:
-            for field_name in form.fields.keys():
+            for field_name in list(form.fields.keys()):
                 if form.prefix is not None:
                     data_key = "%s-%s" % (form.prefix, field_name)
                 else:

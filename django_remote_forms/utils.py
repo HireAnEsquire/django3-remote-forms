@@ -4,7 +4,7 @@ from django.utils.encoding import force_unicode
 
 def resolve_promise(o):
     if isinstance(o, dict):
-        for k, v in o.items():
+        for k, v in list(o.items()):
             o[k] = resolve_promise(v)
     elif isinstance(o, (list, tuple)):
         o = [resolve_promise(x) for x in o]
